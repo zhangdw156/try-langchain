@@ -1,0 +1,17 @@
+[project]
+name = "try-langchain"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.116.1",
+    "langchain>=0.3.26",
+    "langchain-community>=0.3.27",
+    "langchain-openai>=0.3.28",
+    "langchain-tavily>=0.2.10",
+    "loguru>=0.7.3",
+    "openai>=1.97.1",
+    "python-dotenv>=1.1.1",
+    "uvicorn>=0.35.0",
+]
