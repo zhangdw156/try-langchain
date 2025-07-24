@@ -6,6 +6,11 @@ from utils.logger import logger
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import MessagesPlaceholder
+from dotenv import load_dotenv
+from langchain_tavily import TavilySearch
+
+
+load_dotenv("agent/.env")
 
 
 @tool
@@ -39,13 +44,13 @@ prompt = ChatPromptTemplate.from_messages([
 llm = ChatOpenAI(model="Qwen3-14B",
                  api_key="key",
                  base_url="http://127.0.0.1:49004/v1")
-tools = [add, multiply]
+tools = [add, multiply,TavilySearch(max_results=3)]
 llm_with_tools = llm.bind_tools(tools)
 # 5. 构建链
 chain = prompt | llm_with_tools
 
 # 6. 调用链
-query = "3 * 12等于多少？ 11 + 49呢？"
+query = "算一下在美团后端开发岗工作五年，去掉生活成本，最后能有多少钱。"
 messages = [HumanMessage(query)]
 result = chain.invoke({"query": query, "history": []})
 logger.info(result)

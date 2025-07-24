@@ -1,7 +1,7 @@
 import os
 from typing import List, TypedDict, Union, Annotated
 
-from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain.agents import AgentExecutor,create_tool_calling_agent
 from dotenv import load_dotenv
 from langchain_tavily import TavilySearch
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
@@ -55,12 +55,12 @@ actor_prompt = ChatPromptTemplate.from_messages(
 请尽力完成任务，并仔细考虑之前的反思和验证反馈。
 如果你已经找到了最终答案，请直接以最终答案的形式回复，不要再调用任何工具。""",
         ),
-        ("user", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-        MessagesPlaceholder(variable_name="history"),
+        ("placeholder", "{history}"),
+        ("human", "{input}"),
+        ("placeholder", "{agent_scratchpad}"),
     ]
 )
-actor_agent = create_openai_tools_agent(actor_llm, tools, actor_prompt)
+actor_agent = create_tool_calling_agent(actor_llm, tools, actor_prompt)
 actor_executor = AgentExecutor(agent=actor_agent, tools=tools, verbose=True)
 
 # --- 4.3. Reflector (反思者) ---
@@ -71,7 +71,7 @@ reflector_prompt = ChatPromptTemplate.from_messages(
             """你是一位 Agent 行为分析专家。你的任务是分析一个 Agent 失败的执行轨迹，并提供具体的、有建设性的改进建议。
 请只输出你需要 Agent 在下一次尝试中记住的关键反思，不要有任何其他多余的文字。""",
         ),
-        ("user", "这是 Agent 上次失败的完整思考过程：\n{intermediate_steps}"),
+        ("human", "这是 Agent 上次失败的完整思考过程：\n{intermediate_steps}"),
     ]
 )
 reflector_chain = reflector_prompt | reflector_llm
@@ -90,7 +90,7 @@ verifier_prompt = ChatPromptTemplate.from_messages(
 如果答案没有问题，请只回复 "OK"。
 如果答案有问题，请提供具体的、可操作的修改建议，告诉 Agent 应该如何修正它的答案。""",
         ),
-        ("user", "原始问题: {input}\n\nAgent 的答案: {agent_outcome}"),
+        ("human", "原始问题: {input}\n\nAgent 的答案: {agent_outcome}"),
     ]
 )
 verifier_chain = verifier_prompt | verifier_llm
@@ -101,7 +101,7 @@ verifier_chain = verifier_prompt | verifier_llm
 # ==============================================================================
 
 def run_agent_with_reflection_and_verification(
-        input_question: str, max_loops: int = 3
+        input_question: str, max_loops: int = 20
 ):
     state = AgentState(
         input=input_question,
@@ -133,23 +133,12 @@ def run_agent_with_reflection_and_verification(
             "input": state["input"],
             "history": history
         })
-
+        print("result:", result)
         # ==================== 调试代码开始 ====================
         print("\n" + "*" * 10 + " DEBUGGING RESULT " + "*" * 10)
         print(f"Type of result: {type(result)}")
         print(f"Keys in result: {list(result.keys())}")
-
-        intermediate_steps_value = result.get("intermediate_steps")
-        print(f"Type of intermediate_steps from result: {type(intermediate_steps_value)}")
-        print(f"Content of intermediate_steps from result: {intermediate_steps_value}")
-        print("*" * 30 + "\n")
-        # ==================== 调试代码结束 ====================
-
-        # --- 关键修正 ---
-        # 使用 .get() 来安全地访问 'intermediate_steps'
-        # 如果它不存在（因为 Agent 没有调用工具），就返回一个空列表 []
         state["agent_outcome"] = result.get("output", "")
-        state["intermediate_steps"] = result.get("intermediate_steps", [])
 
         print("\n--- [ 阶段 2: Verifier 验证 ] ---")
         # ... 后续代码保持不变 ...
@@ -166,17 +155,8 @@ def run_agent_with_reflection_and_verification(
             state["verifications"].append(verification_result)
 
         print("\n--- [ 阶段 3: Reflector 反思 ] ---")
-        # 如果没有 intermediate_steps，Reflector 可能无法很好地工作
-        # 但至少程序不会崩溃。我们可以让它基于最终答案进行反思。
-        # 一个更好的做法是，如果 intermediate_steps 为空，就将 agent_outcome 也传给 reflector
-        if not state["intermediate_steps"]:
-            print("警告: 没有工具调用轨迹可供反思，将基于最终输出来进行反思。")
-            reflection_input = f"Agent 没有调用任何工具，直接输出了以下内容：\n{state['agent_outcome']}"
-        else:
-            reflection_input = str(state["intermediate_steps"])
-
         reflection_result = reflector_chain.invoke({
-            "intermediate_steps": reflection_input,
+            "intermediate_steps": state["agent_outcome"],
         }).content.strip()
 
         print(f"反思建议: {reflection_result}")
@@ -190,7 +170,7 @@ def run_agent_with_reflection_and_verification(
 # 6. 运行示例
 # ==============================================================================
 if __name__ == "__main__":
-    complex_question = "分析一下 COVID-19 疫情期间，美联储的量化宽松政策（QE）是如何通过影响半导体供应链，最终传导到普通消费者的游戏机（如 PS5）购买价格上的？请梳理出完整的因果链条。"
+    complex_question = "分析一下 COVID-19 疫情期间，美联储的量化宽松政策（QE）是如何通过影响半导体供应链，最终传导到苏超的爆火？请梳理出完整的因果链条。"
 
     final_answer = run_agent_with_reflection_and_verification(complex_question)
 
