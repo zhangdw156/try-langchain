@@ -170,7 +170,7 @@ def run_agent_with_reflection_and_verification(
 # 6. 运行示例
 # ==============================================================================
 if __name__ == "__main__":
-    complex_question = "分析一下 COVID-19 疫情期间，美联储的量化宽松政策（QE）是如何通过影响半导体供应链，最终传导到苏超的爆火？请梳理出完整的因果链条。"
+    complex_question = "分析一下 COVID-19 疫情期间，美联储的量化宽松政策（QE）是如何通过影响半导体供应链，最终传导到软件所的招生？这一定是有因果关系的，请梳理出完整的因果链条。"
 
     final_answer = run_agent_with_reflection_and_verification(complex_question)
 
