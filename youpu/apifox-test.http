@@ -1,0 +1,2 @@
+# 查询全部表单填写历史记录
+GET http://112.31.167.170:19562/dmx-data/api/formSubmissionHistory/queryAll

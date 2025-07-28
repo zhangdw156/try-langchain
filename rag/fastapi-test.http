@@ -1,0 +1,2 @@
+GET http://localhost:49002/search
+    ?query=LangChain
