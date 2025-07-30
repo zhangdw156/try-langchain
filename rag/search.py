@@ -47,7 +47,7 @@ class SearchResponse(BaseModel):
     query: str
     results: List[SearchResultItem]
 
-
+   
 @app.get("/search", response_model=SearchResponse)
 def search_vector(
         query: str,

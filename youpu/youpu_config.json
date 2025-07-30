@@ -1,4 +1,0 @@
-{
-  "backend_url": "http://112.31.167.170:19562/dmx-data/api/",
-  "ollama_model_name": "dengcao/Qwen3-Embedding-8B:Q8_0"
-}

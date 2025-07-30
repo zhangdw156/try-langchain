@@ -13,10 +13,10 @@ dependencies = [
     "langchain-ollama>=0.3.6",
     "langchain-openai>=0.3.28",
     "langchain-tavily>=0.2.10",
+    "langgraph>=0.6.1",
     "loguru>=0.7.3",
     "openai>=1.97.1",
     "pymilvus>=2.5.14",
     "python-dotenv>=1.1.1",
     "sentence-transformers>=5.0.0",
-    "uvicorn[standard]>=0.35.0",
 ]
